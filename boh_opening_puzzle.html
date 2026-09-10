@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOH Opening Flow Chart — Puzzle</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --paper:#faf8f4;
+    --panel:#111111;
+    --orange:#d9711f;
+    --orange-dark:#b8590f;
+    --gray-diamond:#9a9a9a;
+    --good:#2f8f4e;
+    --bad:#c0392b;
+    --blank-border:#c9c2b4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Helvetica, Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding-bottom:60px;
+  }
+  header{
+    padding:22px 20px 16px;
+    text-align:center;
+    border-bottom:3px solid var(--ink);
+    background:var(--paper);
+  }
+  header h1{margin:0 0 6px; font-size:1.5rem; letter-spacing:0.3px;}
+  header p{margin:0 auto; color:#555; font-size:0.92rem; max-width:640px;}
+
+  .status-bar{
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    padding:12px 16px; flex-wrap:wrap;
+  }
+  .progress-pill{
+    background:var(--ink); color:#fff; padding:6px 16px; border-radius:999px;
+    font-weight:600; font-size:0.9rem;
+  }
+  button.action-btn{
+    background:var(--orange); color:#fff; border:none; padding:8px 18px;
+    border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  button.action-btn:hover{background:var(--orange-dark);}
+  button.action-btn.secondary{background:transparent; color:var(--ink); border:2px solid var(--ink);}
+  button.action-btn.secondary:hover{background:var(--ink); color:#fff;}
+
+  #wordbank-label{
+    max-width:1100px; margin:18px auto 6px; padding:0 16px;
+    font-size:0.8rem; font-weight:700; letter-spacing:0.4px; color:#777;
+  }
+  #wordbank{
+    max-width:1100px; margin:0 auto 10px; padding:14px 16px;
+    background:#fff; border:2px dashed var(--blank-border); border-radius:10px;
+    display:flex; flex-wrap:wrap; gap:10px; min-height:64px;
+  }
+  .chip{
+    background:var(--panel); color:#fff; padding:10px 14px; border-radius:8px;
+    font-size:0.82rem; line-height:1.35; cursor:grab; user-select:none; touch-action:none;
+    box-shadow:0 2px 0 rgba(0,0,0,0.25); max-width:230px; border:1px solid #333;
+  }
+  .chip:active{cursor:grabbing;}
+  .chip.dragging{
+    position:fixed; z-index:999; pointer-events:none; opacity:0.95;
+    transform:scale(1.03); box-shadow:0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  #canvas-wrap{
+    max-width:1100px; margin:8px auto 0; position:relative; width:100%;
+    aspect-ratio:1100/1600;
+  }
+  svg.connectors{position:absolute; inset:0; width:100%; height:100%;}
+  .node{
+    position:absolute; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:6px; font-size:0.72rem; line-height:1.25;
+  }
+  .node.fixed-rect{background:var(--panel); color:#fff; border-radius:10px; font-weight:600;}
+  .node.diamond .diamond-bg{
+    position:absolute; inset:0; background:var(--gray-diamond);
+    clip-path:polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%); border-radius:6px;
+  }
+  .node.diamond .diamond-text{position:relative; z-index:2; color:#fff; font-weight:700; padding:0 16%;}
+  .node.circle{
+    border-radius:50%; background:#fff; border:6px solid var(--orange);
+    color:var(--orange); font-weight:800; font-size:0.9rem;
+  }
+  .blank{
+    position:absolute; background:#fff; border:2.5px dashed var(--blank-border); border-radius:10px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:6px; font-size:0.72rem; line-height:1.3; color:#9a9a9a; font-weight:600;
+    transition:background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .blank .hint-mark{font-size:1.3rem; color:#c9c2b4;}
+  .blank.filled{border-style:solid; border-color:var(--good); background:var(--panel); color:#fff; font-weight:600;}
+  .blank.filled ul{margin:2px 0 0; padding-left:16px; text-align:left;}
+  .blank.filled li{margin:1px 0;}
+  .blank.dragover{background:#fff6ec; border-color:var(--orange);}
+  .blank.wrong-flash{animation:shakeRed 0.4s ease; border-color:var(--bad); background:#fdeceb;}
+  @keyframes shakeRed{
+    0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);}
+  }
+  .arrow-label{
+    position:absolute; background:var(--paper); padding:1px 5px;
+    font-size:0.68rem; font-weight:700; font-style:italic; color:#444;
+  }
+  #win-banner{
+    display:none; max-width:1100px; margin:16px auto; padding:16px 20px;
+    background:var(--good); color:#fff; border-radius:10px; text-align:center;
+    font-weight:700; font-size:1rem;
+  }
+  @media (prefers-reduced-motion: reduce){ .blank.wrong-flash{animation:none;} }
+  @media (max-width:640px){
+    header h1{font-size:1.2rem;}
+    .chip{font-size:0.72rem; max-width:170px; padding:8px 10px;}
+    .node, .blank{font-size:0.6rem;}
+    .node.circle{font-size:0.7rem;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Back of House Opening — Flow Chart Puzzle</h1>
+  <p>Drag each step into its matching blank. Decision points, START, and OPEN are already filled in.</p>
+</header>
+
+<div class="status-bar">
+  <div class="progress-pill" id="progress-pill">0 / 19 placed</div>
+  <button class="action-btn secondary" id="reset-btn">Reset</button>
+</div>
+
+<div id="wordbank-label">DRAG FROM HERE</div>
+<div id="wordbank"></div>
+
+<div id="win-banner">🎉 Nice work — the full BOH opening flow is correctly rebuilt!</div>
+
+<div id="canvas-wrap">
+  <svg class="connectors" viewBox="0 0 1100 1600" preserveAspectRatio="none"></svg>
+  <div id="nodes-layer"></div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const W = 1100, H = 1600;
+
+const nodes = [
+  // fixed anchors
+  {id:'start_here', x:60, y:20, w:160, h:140, shape:'circle', fixed:true, text:'START<br>HERE'},
+  {id:'has_foh', x:40, y:190, w:200, h:200, shape:'diamond', fixed:true, text:'Has FOH already started opening?'},
+  {id:'type_service', x:270, y:670, w:190, h:180, shape:'diamond', fixed:true, text:'Type of service table?'},
+  {id:'open_node', x:660, y:1370, w:150, h:150, shape:'circle', fixed:true, text:'OPEN'},
+
+  // Yes branch
+  {id:'wash_yes', x:340, y:245, w:150, h:90, text:'Wash hands'},
+  {id:'exhaust_yes', x:530, y:210, w:200, h:170, text:'Turn on:<br>Exhaust fans and kitchen lights'},
+
+  // No branch
+  {id:'wash_no', x:40, y:430, w:200, h:90, text:'Wash hands'},
+  {id:'disarm_alarm', x:40, y:560, w:200, h:90, text:'Disarm the alarm'},
+  {id:'exhaust_no', x:40, y:705, w:200, h:110, text:'Turn on:<br>Exhaust fans and kitchen lights'},
+
+  // service table branches
+  {id:'fill_steam', x:260, y:430, w:210, h:170, text:'Fill steam table with water to appropriate level and turn temperature dials to HIGH'},
+  {id:'ensure_gauges', x:490, y:675, w:200, h:170, text:'Ensure all temperature gauges are working and set from 180-190&deg;F'},
+
+  // merge point
+  {id:'turn_on_teriyaki', x:490, y:430, w:200, h:170, text:'Turn on:<br>&bull; Teriyaki Grill<br>&bull; All fryers'},
+
+  // right-hand cooking chain
+  {id:'season_grill', x:740, y:440, w:200, h:150, text:'Season grill and set to correct temperature'},
+  {id:'light_blancher', x:740, y:630, w:200, h:150, text:'Light blancher pilot and bring water to a boil'},
+  {id:'light_pilots', x:740, y:820, w:200, h:130, text:'Light pilots for the cooking range'},
+  {id:'check_cooling', x:740, y:990, w:200, h:150, text:'Check:<br>&bull; Cooling units<br>&bull; Hot holding units'},
+
+  // leftward chain
+  {id:'cook_rice', x:530, y:990, w:190, h:150, text:'Cook white rice or basic sauce rice (as needed by the store)'},
+  {id:'set_up_sink', x:340, y:990, w:170, h:150, text:'Set up Sink#3 on 3-compartment sink'},
+  {id:'remove_sauce_cart', x:140, y:990, w:180, h:150, text:'Remove sauce cart from walk-in cooler'},
+
+  // final cooking + close
+  {id:'cook_fried_rice', x:20, y:1180, w:180, h:150, text:'Cook:<br>batch #1/2 or #1 of Fried Rice and Chow Mein use sales by 30 mins'},
+  {id:'cook_lto', x:280, y:1180, w:220, h:150, text:'Cook:<br>batch #1/2 or #1 of LTO, C1, C3, C4, B1, F4 use sales by 30 mins'},
+  {id:'cook_e2e3', x:125, y:1370, w:210, h:150, text:'Cook:<br>2 orders of E2 and E3'},
+  {id:'unlock_doors', x:400, y:1370, w:200, h:150, text:'Unlock all doors'},
+];
+
+const connectors = [
+  {pts:[[140,160],[140,190]]},
+  {pts:[[240,290],[340,290]], label:{x:270,y:268,text:'Yes'}},
+  {pts:[[490,290],[530,290]]},
+  {pts:[[630,380],[630,405],[590,405],[590,430]]},
+  {pts:[[140,390],[140,430]], label:{x:150,y:405,text:'No'}},
+  {pts:[[140,520],[140,560]]},
+  {pts:[[140,650],[140,705]]},
+  {pts:[[240,760],[270,760]]},
+
+  {pts:[[365,670],[365,600]], label:{x:300,y:625,text:'Water/Steam'}},
+  {pts:[[460,760],[490,760]], label:{x:395,y:740,text:'Induction'}},
+
+  {pts:[[470,515],[490,515]]},
+  {pts:[[590,675],[590,600]]},
+
+  {pts:[[690,515],[740,515]]},
+  {pts:[[840,590],[840,630]]},
+  {pts:[[840,780],[840,820]]},
+  {pts:[[840,950],[840,990]]},
+
+  {pts:[[740,1065],[720,1065]]},
+  {pts:[[530,1065],[510,1065]]},
+  {pts:[[340,1065],[320,1065]]},
+
+  {pts:[[230,1140],[230,1370]]},
+  {pts:[[230,1255],[200,1255]]},
+  {pts:[[230,1255],[280,1255]]},
+  {pts:[[335,1445],[400,1445]]},
+  {pts:[[600,1445],[660,1445]]},
+];
+
+const pct = (v, total) => (v/total*100)+'%';
+
+const nodesLayer = document.getElementById('nodes-layer');
+const svg = document.querySelector('svg.connectors');
+const wordbank = document.getElementById('wordbank');
+const progressPill = document.getElementById('progress-pill');
+const winBanner = document.getElementById('win-banner');
+
+const defs = document.createElementNS(NS,'defs');
+defs.innerHTML = `<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+  <path d="M0,0 L8,4 L0,8 Z" fill="#1a1a1a"/>
+</marker>`;
+svg.appendChild(defs);
+
+connectors.forEach(c=>{
+  if(c.skip) return;
+  const pts = c.pts.map(p=>p.join(',')).join(' ');
+  const poly = document.createElementNS(NS,'polyline');
+  poly.setAttribute('points', pts);
+  poly.setAttribute('fill','none');
+  poly.setAttribute('stroke','#1a1a1a');
+  poly.setAttribute('stroke-width','5');
+  poly.setAttribute('marker-end','url(#arrowhead)');
+  svg.appendChild(poly);
+  if(c.label){
+    const lbl = document.createElement('div');
+    lbl.className = 'arrow-label';
+    lbl.style.left = pct(c.label.x, W);
+    lbl.style.top = pct(c.label.y, H);
+    lbl.textContent = c.label.text;
+    document.getElementById('canvas-wrap').appendChild(lbl);
+  }
+});
+
+const draggableNodes = [];
+nodes.forEach(n=>{
+  const el = document.createElement('div');
+  el.style.left = pct(n.x, W);
+  el.style.top = pct(n.y, H);
+  el.style.width = pct(n.w, W);
+  el.style.height = pct(n.h, H);
+
+  if(n.fixed){
+    if(n.shape==='circle'){
+      el.className = 'node circle';
+      el.innerHTML = n.text;
+    } else if(n.shape==='diamond'){
+      el.className = 'node diamond';
+      el.innerHTML = `<div class="diamond-bg"></div><div class="diamond-text">${n.text}</div>`;
+    } else {
+      el.className = 'node fixed-rect';
+      el.innerHTML = n.text;
+    }
+  } else {
+    el.className = 'blank';
+    el.dataset.id = n.id;
+    el.dataset.answer = n.text;
+    el.dataset.filled = 'false';
+    el.innerHTML = '<span class="hint-mark">?</span>';
+    draggableNodes.push(n);
+  }
+  nodesLayer.appendChild(el);
+});
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+let usedCount = 0;
+const totalBlanks = draggableNodes.length;
+
+function buildWordbank(){
+  wordbank.innerHTML = '';
+  const shuffled = shuffle(draggableNodes);
+  shuffled.forEach(n=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.dataset.text = n.text;
+    chip.dataset.nodeId = n.id;
+    chip.innerHTML = n.text;
+    wordbank.appendChild(chip);
+    attachDrag(chip);
+  });
+}
+
+function updateProgress(){
+  progressPill.textContent = `${usedCount} / ${totalBlanks} placed`;
+  winBanner.style.display = (usedCount === totalBlanks) ? 'block' : 'none';
+}
+
+function resetPuzzle(){
+  usedCount = 0;
+  document.querySelectorAll('.blank').forEach(b=>{
+    b.classList.remove('filled','dragover','wrong-flash');
+    b.dataset.filled = 'false';
+    b.innerHTML = '<span class="hint-mark">?</span>';
+  });
+  buildWordbank();
+  updateProgress();
+}
+
+let dragEl = null;
+let dragChipData = null;
+let offsetX = 0, offsetY = 0;
+let isDraggingChip = false;
+let lastPointerY = 0;
+
+const AUTOSCROLL_EDGE = 110;
+const AUTOSCROLL_MAX_SPEED = 16;
+
+function autoScrollLoop(){
+  if(!isDraggingChip) return;
+  let speed = 0;
+  if(lastPointerY < AUTOSCROLL_EDGE){
+    speed = -AUTOSCROLL_MAX_SPEED * (1 - lastPointerY / AUTOSCROLL_EDGE);
+  } else if(lastPointerY > window.innerHeight - AUTOSCROLL_EDGE){
+    speed = AUTOSCROLL_MAX_SPEED * (1 - (window.innerHeight - lastPointerY) / AUTOSCROLL_EDGE);
+  }
+  if(speed !== 0) window.scrollBy(0, speed);
+  requestAnimationFrame(autoScrollLoop);
+}
+
+function attachDrag(chip){
+  chip.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    dragChipData = {text: chip.dataset.text, nodeId: chip.dataset.nodeId};
+    const rect = chip.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    dragEl = chip.cloneNode(true);
+    dragEl.classList.add('dragging');
+    dragEl.style.width = rect.width+'px';
+    dragEl.style.left = rect.left+'px';
+    dragEl.style.top = rect.top+'px';
+    document.body.appendChild(dragEl);
+    chip.style.visibility = 'hidden';
+
+    chip.setPointerCapture && chip.setPointerCapture(e.pointerId);
+
+    isDraggingChip = true;
+    lastPointerY = e.clientY;
+    requestAnimationFrame(autoScrollLoop);
+
+    function onMove(ev){
+      if(!dragEl) return;
+      lastPointerY = ev.clientY;
+      dragEl.style.left = (ev.clientX - offsetX)+'px';
+      dragEl.style.top = (ev.clientY - offsetY)+'px';
+      document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+      const target = getBlankUnder(ev.clientX, ev.clientY);
+      if(target) target.classList.add('dragover');
+    }
+    function onUp(ev){
+      isDraggingChip = false;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      handleDrop(ev.clientX, ev.clientY, chip);
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+function getBlankUnder(x,y){
+  if(dragEl) dragEl.style.display='none';
+  const el = document.elementFromPoint(x,y);
+  if(dragEl) dragEl.style.display='';
+  if(!el) return null;
+  return el.closest('.blank');
+}
+
+function handleDrop(x,y, chip){
+  const blank = getBlankUnder(x,y);
+  document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+
+  if(blank && blank.dataset.filled === 'false'){
+    const expected = blank.dataset.answer;
+    if(dragChipData.text === expected){
+      blank.dataset.filled = 'true';
+      blank.classList.add('filled');
+      blank.innerHTML = expected;
+      usedCount++;
+      chip.remove();
+      updateProgress();
+    } else {
+      blank.classList.add('wrong-flash');
+      setTimeout(()=>blank.classList.remove('wrong-flash'), 400);
+      chip.style.visibility = 'visible';
+    }
+  } else {
+    chip.style.visibility = 'visible';
+  }
+
+  if(dragEl){ dragEl.remove(); dragEl = null; }
+  dragChipData = null;
+}
+
+document.getElementById('reset-btn').addEventListener('click', resetPuzzle);
+
+resetPuzzle();
+</script>
+
+</body>
+</html>

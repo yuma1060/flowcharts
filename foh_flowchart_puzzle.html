@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOH Opening Flow Chart — Puzzle</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --paper:#faf8f4;
+    --panel:#111111;
+    --orange:#d9711f;
+    --orange-dark:#b8590f;
+    --gray-diamond:#9a9a9a;
+    --good:#2f8f4e;
+    --bad:#c0392b;
+    --blank-border:#c9c2b4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Helvetica, Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding-bottom:60px;
+  }
+  header{
+    padding:22px 20px 16px;
+    text-align:center;
+    border-bottom:3px solid var(--ink);
+    background:var(--paper);
+  }
+  header h1{
+    margin:0 0 6px;
+    font-size:1.5rem;
+    letter-spacing:0.3px;
+  }
+  header p{
+    margin:0;
+    color:#555;
+    font-size:0.92rem;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .status-bar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    padding:12px 16px;
+    flex-wrap:wrap;
+  }
+  .progress-pill{
+    background:var(--ink);
+    color:#fff;
+    padding:6px 16px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:0.9rem;
+  }
+  button.action-btn{
+    background:var(--orange);
+    color:#fff;
+    border:none;
+    padding:8px 18px;
+    border-radius:8px;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  button.action-btn:hover{background:var(--orange-dark);}
+  button.action-btn.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:2px solid var(--ink);
+  }
+  button.action-btn.secondary:hover{background:var(--ink); color:#fff;}
+
+  #wordbank{
+    max-width:1100px;
+    margin:0 auto 10px;
+    padding:14px 16px;
+    background:#fff;
+    border:2px dashed var(--blank-border);
+    border-radius:10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    min-height:64px;
+  }
+  #wordbank-label{
+    max-width:1100px;
+    margin:18px auto 6px;
+    padding:0 16px;
+    font-size:0.8rem;
+    font-weight:700;
+    letter-spacing:0.4px;
+    color:#777;
+  }
+  .chip{
+    background:var(--panel);
+    color:#fff;
+    padding:10px 14px;
+    border-radius:8px;
+    font-size:0.82rem;
+    line-height:1.35;
+    cursor:grab;
+    user-select:none;
+    touch-action:none;
+    box-shadow:0 2px 0 rgba(0,0,0,0.25);
+    max-width:230px;
+    border:1px solid #333;
+  }
+  .chip:active{cursor:grabbing;}
+  .chip.dragging{
+    position:fixed;
+    z-index:999;
+    pointer-events:none;
+    opacity:0.95;
+    transform:scale(1.03);
+    box-shadow:0 8px 20px rgba(0,0,0,0.35);
+  }
+  .chip ul{margin:2px 0 0; padding-left:16px;}
+  .chip li{margin:1px 0;}
+
+  #canvas-wrap{
+    max-width:1100px;
+    margin:8px auto 0;
+    position:relative;
+    width:100%;
+    aspect-ratio:1150/1300;
+  }
+  svg.connectors{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+  }
+  .node{
+    position:absolute;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:6px;
+    font-size:0.72rem;
+    line-height:1.25;
+  }
+  .node.fixed-rect{
+    background:var(--panel);
+    color:#fff;
+    border-radius:10px;
+    font-weight:600;
+  }
+  .node.diamond .diamond-bg{
+    position:absolute;
+    inset:0;
+    background:var(--gray-diamond);
+    clip-path:polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%);
+    border-radius:6px;
+  }
+  .node.diamond .diamond-text{
+    position:relative;
+    z-index:2;
+    color:#fff;
+    font-weight:700;
+    padding:0 18%;
+  }
+  .node.circle{
+    border-radius:50%;
+    background:#fff;
+    border:6px solid var(--orange);
+    color:var(--orange);
+    font-weight:800;
+    font-size:0.9rem;
+  }
+  .blank{
+    position:absolute;
+    background:#fff;
+    border:2.5px dashed var(--blank-border);
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:6px;
+    font-size:0.72rem;
+    line-height:1.3;
+    color:#9a9a9a;
+    font-weight:600;
+    transition:background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .blank .hint-mark{
+    font-size:1.3rem;
+    color:#c9c2b4;
+  }
+  .blank.filled{
+    border-style:solid;
+    border-color:var(--good);
+    background:var(--panel);
+    color:#fff;
+    font-weight:600;
+  }
+  .blank.filled ul{margin:2px 0 0; padding-left:16px; text-align:left;}
+  .blank.filled li{margin:1px 0;}
+  .blank.dragover{
+    background:#fff6ec;
+    border-color:var(--orange);
+  }
+  .blank.wrong-flash{
+    animation:shakeRed 0.4s ease;
+    border-color:var(--bad);
+    background:#fdeceb;
+  }
+  @keyframes shakeRed{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+  .badge{
+    position:absolute;
+    top:-10px;
+    right:-10px;
+    background:var(--good);
+    color:#fff;
+    border-radius:50%;
+    width:24px;
+    height:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.85rem;
+    box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  }
+  .arrow-label{
+    position:absolute;
+    background:var(--paper);
+    padding:1px 5px;
+    font-size:0.68rem;
+    font-weight:700;
+    font-style:italic;
+    color:#444;
+  }
+  #chip-home-marker{display:none;}
+
+  #win-banner{
+    display:none;
+    max-width:1100px;
+    margin:16px auto;
+    padding:16px 20px;
+    background:var(--good);
+    color:#fff;
+    border-radius:10px;
+    text-align:center;
+    font-weight:700;
+    font-size:1rem;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .blank.wrong-flash{animation:none;}
+  }
+  @media (max-width:640px){
+    header h1{font-size:1.2rem;}
+    .chip{font-size:0.72rem; max-width:170px; padding:8px 10px;}
+    .node, .blank{font-size:0.6rem;}
+    .node.circle{font-size:0.7rem;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Front of House Opening — Flow Chart Puzzle</h1>
+  <p>Drag each step from the tray below into its matching blank on the chart. Decision points and start/end markers are already filled in — you're placing the process steps.</p>
+</header>
+
+<div class="status-bar">
+  <div class="progress-pill" id="progress-pill">0 / 14 placed</div>
+  <button class="action-btn secondary" id="reset-btn">Reset</button>
+</div>
+
+<div id="wordbank-label">DRAG FROM HERE</div>
+<div id="wordbank"></div>
+
+<div id="win-banner">🎉 Nice work — the opening flow is fully rebuilt, correctly!</div>
+
+<div id="canvas-wrap">
+  <svg class="connectors" viewBox="0 0 1150 1300" preserveAspectRatio="none"></svg>
+  <div id="nodes-layer"></div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+
+// ---- Node definitions (canvas coords, 1150 x 1300) ----
+const nodes = [
+  {id:'start_here', x:20, y:145, w:150, h:150, shape:'circle', fixed:true, text:'START<br>HERE'},
+  {id:'decision_boh', x:195, y:130, w:180, h:180, shape:'diamond', fixed:true, text:'Has BOH already started opening?'},
+  {id:'wash_no', x:430, y:185, w:120, h:70, shape:'rect', fixed:false, text:'Wash hands'},
+  {id:'prelim', x:590, y:140, w:210, h:160, shape:'rect', fixed:false, text:'&bull; Disable alarm<br>&bull; Turn on music<br>&bull; Turn on store lights<br>&bull; Set time delay for safe'},
+  {id:'decision_service', x:840, y:130, w:170, h:180, shape:'diamond', fixed:true, text:'Type of Service Table?'},
+  {id:'steam_fill', x:1010, y:150, w:140, h:140, shape:'rect', fixed:false, text:'Fill steam table with water to appropriate level'},
+
+  {id:'temp_dial', x:1010, y:420, w:140, h:100, shape:'rect', fixed:false, text:'Turn Temperature dial to HIGH'},
+  {id:'gauges', x:590, y:420, w:220, h:150, shape:'rect', fixed:false, text:'Ensure all temperature gauges are working and set between 180-190&deg;F'},
+
+  {id:'wash_yes', x:195, y:650, w:120, h:70, shape:'rect', fixed:false, text:'Wash hands'},
+  {id:'tea', x:360, y:630, w:190, h:110, shape:'rect', fixed:false, text:'Brew Tea &amp; set up PCB'},
+  {id:'drink_station', x:595, y:630, w:170, h:110, shape:'rect', fixed:false, text:'Check Drink Station'},
+  {id:'safes', x:810, y:630, w:190, h:110, shape:'rect', fixed:false, text:'Count both safes &amp; all registers'},
+
+  {id:'cameras', x:810, y:830, w:190, h:150, shape:'rect', fixed:false, text:'PIC ensure cameras are working'},
+  {id:'check_box', x:575, y:830, w:210, h:190, shape:'rect', fixed:false, text:'Check:<br>&bull; OLO for any catering<br>&bull; Service lines<br>&bull; Registration area<br>&bull; Lobby &amp; Drive-thru (If applicable)'},
+  {id:'setup_box', x:320, y:830, w:230, h:210, shape:'rect', fixed:false, text:'Set up:<br>&bull; Sanitizer bucket<br>&bull; Steamed Rice Station<br>&bull; Set up Teriyaki chicken cutting board<br>&bull; Bottle Drink Station'},
+
+  {id:'unlock', x:320, y:1090, w:230, h:110, shape:'rect', fixed:false, text:'Unlock all doors'},
+  {id:'open_node', x:600, y:1075, w:140, h:140, shape:'circle', fixed:true, text:'OPEN'},
+  {id:'patio', x:790, y:1090, w:210, h:110, shape:'rect', fixed:false, text:'Check and clean patio &amp; parking lot'},
+];
+
+// ---- Connectors: polyline points in canvas coords, optional label ----
+const connectors = [
+  {pts:[[170,220],[195,220]]},
+  {pts:[[375,220],[430,220]], label:{x:395,y:200,text:'No'}},
+  {pts:[[285,310],[285,650]], label:{x:250,y:480,text:'Yes'}},
+  {pts:[[550,220],[590,220]]},
+  {pts:[[800,220],[840,220]]},
+  {pts:[[1010,220],[1010,220]], skip:true},
+  {pts:[[1005,190],[1010,190]], label:{x:940,y:145,text:'Water/Steam'}},
+  {pts:[[1080,290],[1080,420]]},
+  {pts:[[925,310],[925,495],[810,495]], label:{x:930,y:400,text:'Induction'}},
+  {pts:[[1010,470],[810,470]]},
+  {pts:[[700,570],[700,610],[455,610],[455,630]]},
+  {pts:[[315,685],[360,685]]},
+  {pts:[[550,685],[595,685]]},
+  {pts:[[765,685],[810,685]]},
+  {pts:[[905,740],[905,830]]},
+  {pts:[[810,905],[785,905]]},
+  {pts:[[575,925],[550,925]]},
+  {pts:[[435,1040],[435,1090]]},
+  {pts:[[550,1145],[600,1145]]},
+  {pts:[[740,1145],[790,1145]]},
+];
+
+const W = 1150, H = 1300;
+const pct = (v, total) => (v/total*100)+'%';
+
+const nodesLayer = document.getElementById('nodes-layer');
+const svg = document.querySelector('svg.connectors');
+const wordbank = document.getElementById('wordbank');
+const progressPill = document.getElementById('progress-pill');
+const winBanner = document.getElementById('win-banner');
+
+// Build arrow marker def
+const defs = document.createElementNS(NS,'defs');
+defs.innerHTML = `<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+  <path d="M0,0 L8,4 L0,8 Z" fill="#1a1a1a"/>
+</marker>`;
+svg.appendChild(defs);
+
+connectors.forEach(c=>{
+  if(c.skip) return;
+  const pts = c.pts.map(p=>p.join(',')).join(' ');
+  const poly = document.createElementNS(NS,'polyline');
+  poly.setAttribute('points', pts);
+  poly.setAttribute('fill','none');
+  poly.setAttribute('stroke','#1a1a1a');
+  poly.setAttribute('stroke-width','5');
+  poly.setAttribute('marker-end','url(#arrowhead)');
+  svg.appendChild(poly);
+  if(c.label){
+    const lbl = document.createElement('div');
+    lbl.className = 'arrow-label';
+    lbl.style.left = pct(c.label.x, W);
+    lbl.style.top = pct(c.label.y, H);
+    lbl.textContent = c.label.text;
+    document.getElementById('canvas-wrap').appendChild(lbl);
+  }
+});
+
+// Render nodes / blanks
+const draggableNodes = [];
+nodes.forEach(n=>{
+  const el = document.createElement('div');
+  el.style.left = pct(n.x, W);
+  el.style.top = pct(n.y, H);
+  el.style.width = pct(n.w, W);
+  el.style.height = pct(n.h, H);
+
+  if(n.fixed){
+    if(n.shape==='circle'){
+      el.className = 'node circle';
+      el.innerHTML = n.text;
+    } else if(n.shape==='diamond'){
+      el.className = 'node diamond';
+      el.innerHTML = `<div class="diamond-bg"></div><div class="diamond-text">${n.text}</div>`;
+    } else {
+      el.className = 'node fixed-rect';
+      el.innerHTML = n.text;
+    }
+  } else {
+    el.className = 'blank';
+    el.dataset.id = n.id;
+    el.dataset.answer = n.text;
+    el.dataset.filled = 'false';
+    el.innerHTML = '<span class="hint-mark">?</span>';
+    draggableNodes.push(n);
+  }
+  nodesLayer.appendChild(el);
+});
+
+// ---- Word bank chips ----
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+let usedCount = 0;
+const totalBlanks = draggableNodes.length;
+
+function buildWordbank(){
+  wordbank.innerHTML = '';
+  const shuffled = shuffle(draggableNodes);
+  shuffled.forEach(n=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.dataset.text = n.text;
+    chip.dataset.nodeId = n.id;
+    chip.innerHTML = n.text;
+    wordbank.appendChild(chip);
+    attachDrag(chip);
+  });
+}
+
+function updateProgress(){
+  progressPill.textContent = `${usedCount} / ${totalBlanks} placed`;
+  if(usedCount === totalBlanks){
+    winBanner.style.display = 'block';
+  } else {
+    winBanner.style.display = 'none';
+  }
+}
+
+function resetPuzzle(){
+  usedCount = 0;
+  document.querySelectorAll('.blank').forEach(b=>{
+    b.classList.remove('filled','dragover','wrong-flash');
+    b.dataset.filled = 'false';
+    b.innerHTML = '<span class="hint-mark">?</span>';
+  });
+  buildWordbank();
+  updateProgress();
+}
+
+// ---- Drag logic (pointer events, mouse + touch) ----
+let dragEl = null;
+let dragChipData = null;
+let originalParent = null;
+let offsetX = 0, offsetY = 0;
+let isDraggingChip = false;
+let lastPointerY = 0;
+
+const AUTOSCROLL_EDGE = 110;
+const AUTOSCROLL_MAX_SPEED = 16;
+
+function autoScrollLoop(){
+  if(!isDraggingChip) return;
+  let speed = 0;
+  if(lastPointerY < AUTOSCROLL_EDGE){
+    speed = -AUTOSCROLL_MAX_SPEED * (1 - lastPointerY / AUTOSCROLL_EDGE);
+  } else if(lastPointerY > window.innerHeight - AUTOSCROLL_EDGE){
+    speed = AUTOSCROLL_MAX_SPEED * (1 - (window.innerHeight - lastPointerY) / AUTOSCROLL_EDGE);
+  }
+  if(speed !== 0) window.scrollBy(0, speed);
+  requestAnimationFrame(autoScrollLoop);
+}
+
+function attachDrag(chip){
+  chip.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    dragChipData = {text: chip.dataset.text, nodeId: chip.dataset.nodeId};
+    originalParent = chip;
+    const rect = chip.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    dragEl = chip.cloneNode(true);
+    dragEl.classList.add('dragging');
+    dragEl.style.width = rect.width+'px';
+    dragEl.style.left = rect.left+'px';
+    dragEl.style.top = rect.top+'px';
+    document.body.appendChild(dragEl);
+    chip.style.visibility = 'hidden';
+
+    chip.setPointerCapture && chip.setPointerCapture(e.pointerId);
+
+    isDraggingChip = true;
+    lastPointerY = e.clientY;
+    requestAnimationFrame(autoScrollLoop);
+
+    function onMove(ev){
+      if(!dragEl) return;
+      lastPointerY = ev.clientY;
+      dragEl.style.left = (ev.clientX - offsetX)+'px';
+      dragEl.style.top = (ev.clientY - offsetY)+'px';
+      document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+      const target = getBlankUnder(ev.clientX, ev.clientY);
+      if(target) target.classList.add('dragover');
+    }
+    function onUp(ev){
+      isDraggingChip = false;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      handleDrop(ev.clientX, ev.clientY, chip);
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+function getBlankUnder(x,y){
+  if(dragEl) dragEl.style.display='none';
+  const el = document.elementFromPoint(x,y);
+  if(dragEl) dragEl.style.display='';
+  if(!el) return null;
+  return el.closest('.blank');
+}
+
+function handleDrop(x,y, chip){
+  const blank = getBlankUnder(x,y);
+  document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+
+  if(blank && blank.dataset.filled === 'false'){
+    const expected = blank.dataset.answer;
+    if(dragChipData.text === expected){
+      blank.dataset.filled = 'true';
+      blank.classList.add('filled');
+      blank.innerHTML = expected;
+      usedCount++;
+      chip.remove();
+      updateProgress();
+    } else {
+      blank.classList.add('wrong-flash');
+      setTimeout(()=>blank.classList.remove('wrong-flash'), 400);
+      chip.style.visibility = 'visible';
+    }
+  } else {
+    chip.style.visibility = 'visible';
+  }
+
+  if(dragEl){ dragEl.remove(); dragEl = null; }
+  dragChipData = null;
+}
+
+document.getElementById('reset-btn').addEventListener('click', resetPuzzle);
+
+resetPuzzle();
+</script>
+
+</body>
+</html>

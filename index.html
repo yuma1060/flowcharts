@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store Flow Chart Puzzles</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --paper:#faf8f4;
+    --orange:#d9711f;
+    --orange-dark:#b8590f;
+    --blue:#1f3a5f;
+    --green:#3e6b23;
+    --card-border:#e4ddd0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Helvetica, Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  header{
+    padding:48px 20px 28px;
+    text-align:center;
+    border-bottom:3px solid var(--ink);
+  }
+  header h1{
+    margin:0 0 10px;
+    font-size:2rem;
+    letter-spacing:0.3px;
+  }
+  header p{
+    margin:0 auto;
+    color:#555;
+    font-size:1rem;
+    max-width:520px;
+    line-height:1.5;
+  }
+  main{
+    max-width:920px;
+    margin:0 auto;
+    padding:40px 20px 60px;
+  }
+  .section-label{
+    font-size:0.78rem;
+    font-weight:700;
+    letter-spacing:0.6px;
+    color:#8a8272;
+    margin:0 0 14px 4px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-bottom:36px;
+  }
+  @media (max-width:640px){
+    .grid{grid-template-columns:1fr;}
+    header h1{font-size:1.5rem;}
+  }
+  a.card{
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    background:#fff;
+    border:2px solid var(--card-border);
+    border-radius:14px;
+    padding:24px;
+    position:relative;
+    overflow:hidden;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  a.card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 24px rgba(0,0,0,0.1);
+    border-color:var(--orange);
+  }
+  a.card::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; bottom:0;
+    width:6px;
+    background:var(--accent, var(--orange));
+  }
+  .card .eyebrow{
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.5px;
+    color:var(--accent, var(--orange));
+    margin-bottom:6px;
+  }
+  .card h2{
+    margin:0 0 8px;
+    font-size:1.3rem;
+  }
+  .card p.desc{
+    margin:0 0 18px;
+    font-size:0.88rem;
+    color:#666;
+    line-height:1.45;
+  }
+  .card .meta{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .step-count{
+    font-size:0.78rem;
+    font-weight:600;
+    color:#888;
+    background:#f4f1ea;
+    padding:4px 10px;
+    border-radius:999px;
+  }
+  .cta{
+    font-size:0.85rem;
+    font-weight:700;
+    color:var(--accent, var(--orange));
+  }
+  footer{
+    text-align:center;
+    padding:0 20px 40px;
+    font-size:0.8rem;
+    color:#999;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Store Flow Chart Puzzles</h1>
+  <p>Pick a checklist to practice. Drag each step into its matching blank, check your placements, and rebuild the full opening or closing flow from memory.</p>
+</header>
+
+<main>
+  <div class="section-label">FRONT OF HOUSE</div>
+  <div class="grid">
+    <a class="card" href="foh_flowchart_puzzle.html" style="--accent:#d9711f">
+      <div class="eyebrow">FOH · OPENING</div>
+      <h2>Opening Flow Chart</h2>
+      <p class="desc">Wash hands, set up the service table, and get the front counter ready before OPEN.</p>
+      <div class="meta">
+        <span class="step-count">14 steps</span>
+        <span class="cta">Start puzzle →</span>
+      </div>
+    </a>
+    <a class="card" href="foh_closing_puzzle.html" style="--accent:#b8590f">
+      <div class="eyebrow">FOH · CLOSING</div>
+      <h2>Closing Flow Chart</h2>
+      <p class="desc">Lock up, split lobby vs. cash-handling tasks, and finish the register close-out.</p>
+      <div class="meta">
+        <span class="step-count">31 steps</span>
+        <span class="cta">Start puzzle →</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="section-label">BACK OF HOUSE</div>
+  <div class="grid">
+    <a class="card" href="boh_opening_puzzle.html" style="--accent:#3e6b23">
+      <div class="eyebrow">BOH · OPENING</div>
+      <h2>Opening Flow Chart</h2>
+      <p class="desc">Fire up the equipment, prep the steam or induction table, and get cooking before OPEN.</p>
+      <div class="meta">
+        <span class="step-count">19 steps</span>
+        <span class="cta">Start puzzle →</span>
+      </div>
+    </a>
+    <a class="card" href="boh_closing_puzzle.html" style="--accent:#1f3a5f">
+      <div class="eyebrow">BOH · CLOSING</div>
+      <h2>Closing Flow Chart</h2>
+      <p class="desc">Split kitchen and dish-station cleanup across two people, then finish the floors together.</p>
+      <div class="meta">
+        <span class="step-count">30 steps</span>
+        <span class="cta">Start puzzle →</span>
+      </div>
+    </a>
+  </div>
+</main>
+
+<footer>
+  Keep this page and all four puzzle files in the same folder so the links work.
+</footer>
+
+</body>
+</html>

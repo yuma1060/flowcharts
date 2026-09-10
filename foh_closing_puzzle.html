@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOH Closing Flow Chart — Puzzle</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --paper:#faf8f4;
+    --panel:#111111;
+    --green:#3e6b23;
+    --orange:#d9711f;
+    --orange-dark:#b8590f;
+    --gray-diamond:#9a9a9a;
+    --good:#2f8f4e;
+    --bad:#c0392b;
+    --blank-border:#c9c2b4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Helvetica, Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding-bottom:60px;
+  }
+  header{
+    padding:22px 20px 16px;
+    text-align:center;
+    border-bottom:3px solid var(--ink);
+    background:var(--paper);
+  }
+  header h1{margin:0 0 6px; font-size:1.5rem; letter-spacing:0.3px;}
+  header p{margin:0 auto; color:#555; font-size:0.92rem; max-width:640px;}
+
+  .legend{
+    display:flex; justify-content:center; gap:18px; padding:10px 16px 0; flex-wrap:wrap;
+  }
+  .legend-item{display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600;}
+  .swatch{width:18px; height:18px; border-radius:5px;}
+  .swatch.p1{background:var(--panel);}
+  .swatch.p2{background:var(--green);}
+
+  .status-bar{
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    padding:12px 16px; flex-wrap:wrap;
+  }
+  .progress-pill{
+    background:var(--ink); color:#fff; padding:6px 16px; border-radius:999px;
+    font-weight:600; font-size:0.9rem;
+  }
+  button.action-btn{
+    background:var(--orange); color:#fff; border:none; padding:8px 18px;
+    border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  button.action-btn:hover{background:var(--orange-dark);}
+  button.action-btn.secondary{background:transparent; color:var(--ink); border:2px solid var(--ink);}
+  button.action-btn.secondary:hover{background:var(--ink); color:#fff;}
+
+  #wordbank-label{
+    max-width:1100px; margin:18px auto 6px; padding:0 16px;
+    font-size:0.8rem; font-weight:700; letter-spacing:0.4px; color:#777;
+  }
+  #wordbank{
+    max-width:1100px; margin:0 auto 10px; padding:14px 16px;
+    background:#fff; border:2px dashed var(--blank-border); border-radius:10px;
+    display:flex; flex-wrap:wrap; gap:10px; min-height:64px;
+  }
+  .chip{
+    color:#fff; padding:10px 14px; border-radius:8px; font-size:0.8rem;
+    line-height:1.35; cursor:grab; user-select:none; touch-action:none;
+    box-shadow:0 2px 0 rgba(0,0,0,0.25); max-width:230px; border:1px solid rgba(0,0,0,0.3);
+  }
+  .chip.p1{background:var(--panel);}
+  .chip.p2{background:var(--green);}
+  .chip:active{cursor:grabbing;}
+  .chip.dragging{
+    position:fixed; z-index:999; pointer-events:none; opacity:0.95;
+    transform:scale(1.03); box-shadow:0 8px 20px rgba(0,0,0,0.35);
+  }
+  .chip ul{margin:2px 0 0; padding-left:16px;}
+  .chip li{margin:1px 0;}
+
+  #canvas-wrap{
+    max-width:1100px; margin:8px auto 0; position:relative; width:100%;
+    aspect-ratio:1150/2000;
+  }
+  svg.connectors{position:absolute; inset:0; width:100%; height:100%;}
+  .node{
+    position:absolute; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:6px; font-size:0.68rem; line-height:1.25;
+  }
+  .node.fixed-rect{background:var(--panel); color:#fff; border-radius:10px; font-weight:600;}
+  .node.diamond .diamond-bg{
+    position:absolute; inset:0; background:var(--gray-diamond);
+    clip-path:polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%); border-radius:6px;
+  }
+  .node.diamond .diamond-text{position:relative; z-index:2; color:#fff; font-weight:700; padding:0 16%;}
+  .node.circle{
+    border-radius:50%; background:#fff; border:6px solid var(--orange);
+    color:var(--orange); font-weight:800; font-size:0.85rem;
+  }
+  .blank{
+    position:absolute; background:#fff; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:6px; font-size:0.68rem; line-height:1.3; color:#9a9a9a; font-weight:600;
+    transition:background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .blank.p1{border:2.5px dashed #555;}
+  .blank.p2{border:2.5px dashed var(--green);}
+  .blank .hint-mark{font-size:1.3rem; color:#c9c2b4;}
+  .blank.filled{border-style:solid; color:#fff; font-weight:600;}
+  .blank.filled.p1{background:var(--panel); border-color:var(--good);}
+  .blank.filled.p2{background:var(--green); border-color:var(--good);}
+  .blank.filled ul{margin:2px 0 0; padding-left:16px; text-align:left;}
+  .blank.filled li{margin:1px 0;}
+  .blank.dragover{background:#fff6ec; border-color:var(--orange) !important;}
+  .blank.wrong-flash{
+    animation:shakeRed 0.4s ease; border-color:var(--bad) !important; background:#fdeceb;
+  }
+  @keyframes shakeRed{
+    0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);}
+  }
+  .arrow-label{
+    position:absolute; background:var(--paper); padding:1px 5px;
+    font-size:0.64rem; font-weight:700; font-style:italic; color:#444;
+  }
+
+  #win-banner{
+    display:none; max-width:1100px; margin:16px auto; padding:16px 20px;
+    background:var(--good); color:#fff; border-radius:10px; text-align:center;
+    font-weight:700; font-size:1rem;
+  }
+  @media (prefers-reduced-motion: reduce){ .blank.wrong-flash{animation:none;} }
+  @media (max-width:640px){
+    header h1{font-size:1.2rem;}
+    .chip{font-size:0.7rem; max-width:170px; padding:8px 10px;}
+    .node, .blank{font-size:0.56rem;}
+    .node.circle{font-size:0.65rem;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Front of House Closing — Flow Chart Puzzle</h1>
+  <p>Drag each step into its matching blank. Black blanks are Person 1's tasks, green blanks are Person 2's. Decision points, PRE-CLOSE, CLOSE, and FINISH are already filled in.</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><span class="swatch p1"></span>Person 1</div>
+  <div class="legend-item"><span class="swatch p2"></span>Person 2</div>
+</div>
+
+<div class="status-bar">
+  <div class="progress-pill" id="progress-pill">0 / 31 placed</div>
+  <button class="action-btn secondary" id="reset-btn">Reset</button>
+</div>
+
+<div id="wordbank-label">DRAG FROM HERE</div>
+<div id="wordbank"></div>
+
+<div id="win-banner">🎉 Nice work — the full closing flow is correctly rebuilt!</div>
+
+<div id="canvas-wrap">
+  <svg class="connectors" viewBox="0 0 1150 2000" preserveAspectRatio="none"></svg>
+  <div id="nodes-layer"></div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const W = 1150, H = 2000;
+
+// ---- Node definitions ----
+const nodes = [
+  // fixed anchors
+  {id:'pre_close', x:20, y:90, w:160, h:160, shape:'circle', fixed:true, text:'PRE-<br>CLOSE'},
+  {id:'close_node', x:290, y:300, w:150, h:150, shape:'circle', fixed:true, text:'CLOSE'},
+  {id:'which_station', x:300, y:480, w:200, h:200, shape:'diamond', fixed:true, text:'Which Station?'},
+  {id:'type_service', x:40, y:800, w:200, h:200, shape:'diamond', fixed:true, text:'Type of Service Table?'},
+  {id:'finish_node', x:800, y:1760, w:150, h:150, shape:'circle', fixed:true, text:'FINISH'},
+
+  // top row (Person 1 / black)
+  {id:'n1', x:200, y:110, w:190, h:110, person:1, text:'Condense serving table to available items'},
+  {id:'n2', x:430, y:110, w:190, h:110, person:1, text:'Close one of the register'},
+  {id:'n3', x:660, y:110, w:190, h:110, person:1, text:'Clean and secure patio area'},
+  {id:'n4', x:890, y:90, w:210, h:150, person:1, text:'Clean:<br>&bull; Lobby Door<br>&bull; Glass Take out trash<br>&bull; Lock side door'},
+
+  // restock row
+  {id:'n5', x:470, y:300, w:210, h:150, person:1, text:'Clean and restock:<br>Restrooms, Beverage Station, Drive-Thru station'},
+  {id:'n6', x:730, y:280, w:210, h:170, person:2, text:'Restock at service line:<br>&bull; Paper goods<br>&bull; Sauces<br>&bull; Fortune cookies'},
+
+  // lobby chain (Person 1)
+  {id:'n7', x:650, y:520, w:190, h:120, person:1, text:'Lock ALL Doors'},
+  {id:'n8', x:880, y:500, w:200, h:150, person:1, text:'&bull; Wipe all tables and chairs<br>&bull; Sweep lobby floor'},
+  {id:'n9', x:880, y:690, w:200, h:140, person:1, text:'Dilute floor cleaner with cold water and mop the lobby floor'},
+  {id:'n10', x:650, y:690, w:190, h:140, person:1, text:'Clean tea maker, dispenser &amp; PCB bubbler'},
+  {id:'n11', x:650, y:870, w:190, h:140, person:1, text:'Allow all components to completely air dry before reassembling'},
+  {id:'n12', x:880, y:870, w:200, h:120, person:1, text:'Clean the drain under soda station'},
+  {id:'n13', x:880, y:1030, w:200, h:110, person:1, text:'Polish all stainless steel'},
+  {id:'n14', x:880, y:1180, w:200, h:150, person:1, text:'Using buddy system to take out trash / prepare trash for morning take-out'},
+  {id:'n15', x:880, y:1370, w:200, h:140, person:1, text:'Leave all drawers empty and completely open'},
+  {id:'n16', x:880, y:1550, w:200, h:170, person:1, text:'&bull; Turn off music<br>&bull; Turn off neon sign<br>&bull; Turn off store lights<br>&bull; Set the alarm'},
+
+  // steam / DT chain (Person 2)
+  {id:'n17', x:40, y:600, w:200, h:140, person:2, text:'Clean, rinse and dry steam table wells'},
+  {id:'n18', x:40, y:1180, w:200, h:110, person:2, text:'Lock DT window'},
+  {id:'n19', x:40, y:1330, w:200, h:140, person:2, text:'Wipe down induction wells using damp cloth or glass cleaner sprayed onto a damp cloth'},
+  {id:'n20', x:40, y:1510, w:200, h:170, person:2, text:'Clean:<br>&bull; Sneeze guard glass<br>&bull; Bottle drink bin<br>&bull; Register and merchandise display'},
+  {id:'n21', x:40, y:1720, w:200, h:150, person:2, text:'Place serving utensils out for the next day and cover serving table wells with empty pans'},
+
+  // serving/cash primary chain (Person 2)
+  {id:'n22', x:300, y:720, w:200, h:170, person:2, text:'Discard foods at the end of the day or donate to local food bank (if applicable)'},
+  {id:'n23', x:300, y:1180, w:200, h:140, person:2, text:'Wipe down induction wells using damp cloth or glass cleaner sprayed onto a damp cloth'},
+  {id:'n24', x:300, y:1360, w:200, h:170, person:2, text:'Clean:<br>&bull; Sneeze guard glass<br>&bull; Bottle drink bin<br>&bull; Register and merchandise display'},
+  {id:'n25', x:300, y:1570, w:200, h:150, person:2, text:'Place serving utensils out for the next day and cover serving table wells with empty pans'},
+  {id:'n26', x:300, y:1760, w:200, h:130, person:2, text:'Polish stainless-steel surface'},
+
+  // donation / final close chain (Person 2)
+  {id:'n27', x:570, y:1050, w:200, h:130, person:2, text:'Empty and count donation box'},
+  {id:'n28', x:570, y:1220, w:200, h:140, person:2, text:'Perform final close to all remaining registers'},
+  {id:'n29', x:570, y:1400, w:200, h:140, person:2, text:'Verify safe funds and input count in the back office'},
+  {id:'n30', x:570, y:1580, w:200, h:130, person:2, text:'Prepare and secure bank deposit'},
+  {id:'n31', x:570, y:1750, w:200, h:170, person:2, text:'Complete:<br>&bull; EOD cash sheet<br>&bull; Cashier Audit<br>&bull; Safe log'},
+];
+
+// ---- Connectors ----
+const connectors = [
+  {pts:[[180,170],[200,170]]},
+  {pts:[[390,165],[430,165]]},
+  {pts:[[620,165],[660,165]]},
+  {pts:[[850,165],[890,165]]},
+  {pts:[[995,240],[995,260],[835,260],[835,280]]},
+  {pts:[[730,375],[680,375]]},
+  {pts:[[470,375],[440,375]]},
+  {pts:[[365,450],[365,465],[400,465],[400,480]]},
+  {pts:[[500,580],[650,580]], label:{x:540,y:555,text:'Lobby'}},
+  {pts:[[400,680],[400,720]], label:{x:410,y:693,text:'Serving Table / Cash Handling'}},
+
+  {pts:[[840,580],[880,575]]},
+  {pts:[[980,650],[980,690]]},
+  {pts:[[880,760],[840,760]]},
+  {pts:[[745,830],[745,870]]},
+  {pts:[[840,940],[880,930]]},
+  {pts:[[980,990],[980,1030]]},
+  {pts:[[980,1140],[980,1180]]},
+  {pts:[[980,1330],[980,1370]]},
+  {pts:[[980,1510],[980,1550]]},
+  {pts:[[980,1720],[980,1835],[950,1835]]},
+
+  {pts:[[300,805],[270,805],[270,900],[240,900]]},
+  {pts:[[140,800],[140,740]], label:{x:150,y:750,text:'Water/Steam'}},
+  {pts:[[40,670],[10,670],[10,1120],[140,1120]]},
+  {pts:[[140,1000],[140,1060]], label:{x:150,y:1010,text:'Induction'}},
+  {pts:[[140,1060],[140,1180]], label:{x:150,y:1105,text:'DT'}},
+  {pts:[[140,1060],[400,1060],[400,1180]], label:{x:220,y:1038,text:'Non DT'}},
+  {pts:[[140,1290],[140,1330]]},
+  {pts:[[140,1470],[140,1510]]},
+  {pts:[[140,1680],[140,1720]]},
+  {pts:[[240,1795],[300,1795]]},
+
+  {pts:[[400,1320],[400,1360]]},
+  {pts:[[400,1530],[400,1570]]},
+  {pts:[[400,1720],[400,1760]]},
+
+  {pts:[[500,1825],[530,1825],[530,1115],[570,1115]]},
+  {pts:[[670,1180],[670,1220]]},
+  {pts:[[670,1360],[670,1400]]},
+  {pts:[[670,1540],[670,1580]]},
+  {pts:[[670,1710],[670,1750]]},
+  {pts:[[770,1835],[800,1835]]},
+];
+
+const pct = (v, total) => (v/total*100)+'%';
+
+const nodesLayer = document.getElementById('nodes-layer');
+const svg = document.querySelector('svg.connectors');
+const wordbank = document.getElementById('wordbank');
+const progressPill = document.getElementById('progress-pill');
+const winBanner = document.getElementById('win-banner');
+
+const defs = document.createElementNS(NS,'defs');
+defs.innerHTML = `<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+  <path d="M0,0 L8,4 L0,8 Z" fill="#1a1a1a"/>
+</marker>`;
+svg.appendChild(defs);
+
+connectors.forEach(c=>{
+  const pts = c.pts.map(p=>p.join(',')).join(' ');
+  const poly = document.createElementNS(NS,'polyline');
+  poly.setAttribute('points', pts);
+  poly.setAttribute('fill','none');
+  poly.setAttribute('stroke','#1a1a1a');
+  poly.setAttribute('stroke-width','5');
+  poly.setAttribute('marker-end','url(#arrowhead)');
+  svg.appendChild(poly);
+  if(c.label){
+    const lbl = document.createElement('div');
+    lbl.className = 'arrow-label';
+    lbl.style.left = pct(c.label.x, W);
+    lbl.style.top = pct(c.label.y, H);
+    lbl.textContent = c.label.text;
+    document.getElementById('canvas-wrap').appendChild(lbl);
+  }
+});
+
+const draggableNodes = [];
+nodes.forEach(n=>{
+  const el = document.createElement('div');
+  el.style.left = pct(n.x, W);
+  el.style.top = pct(n.y, H);
+  el.style.width = pct(n.w, W);
+  el.style.height = pct(n.h, H);
+
+  if(n.fixed){
+    if(n.shape==='circle'){
+      el.className = 'node circle';
+      el.innerHTML = n.text;
+    } else if(n.shape==='diamond'){
+      el.className = 'node diamond';
+      el.innerHTML = `<div class="diamond-bg"></div><div class="diamond-text">${n.text}</div>`;
+    } else {
+      el.className = 'node fixed-rect';
+      el.innerHTML = n.text;
+    }
+  } else {
+    el.className = 'blank p' + n.person;
+    el.dataset.id = n.id;
+    el.dataset.answer = n.text;
+    el.dataset.filled = 'false';
+    el.dataset.person = n.person;
+    el.innerHTML = '<span class="hint-mark">?</span>';
+    draggableNodes.push(n);
+  }
+  nodesLayer.appendChild(el);
+});
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+let usedCount = 0;
+const totalBlanks = draggableNodes.length;
+
+function buildWordbank(){
+  wordbank.innerHTML = '';
+  const shuffled = shuffle(draggableNodes);
+  shuffled.forEach(n=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip p' + n.person;
+    chip.dataset.text = n.text;
+    chip.dataset.nodeId = n.id;
+    chip.innerHTML = n.text;
+    wordbank.appendChild(chip);
+    attachDrag(chip);
+  });
+}
+
+function updateProgress(){
+  progressPill.textContent = `${usedCount} / ${totalBlanks} placed`;
+  winBanner.style.display = (usedCount === totalBlanks) ? 'block' : 'none';
+}
+
+function resetPuzzle(){
+  usedCount = 0;
+  document.querySelectorAll('.blank').forEach(b=>{
+    b.classList.remove('filled','dragover','wrong-flash');
+    b.dataset.filled = 'false';
+    b.innerHTML = '<span class="hint-mark">?</span>';
+  });
+  buildWordbank();
+  updateProgress();
+}
+
+let dragEl = null;
+let dragChipData = null;
+let offsetX = 0, offsetY = 0;
+let isDraggingChip = false;
+let lastPointerY = 0;
+
+const AUTOSCROLL_EDGE = 110;
+const AUTOSCROLL_MAX_SPEED = 16;
+
+function autoScrollLoop(){
+  if(!isDraggingChip) return;
+  let speed = 0;
+  if(lastPointerY < AUTOSCROLL_EDGE){
+    speed = -AUTOSCROLL_MAX_SPEED * (1 - lastPointerY / AUTOSCROLL_EDGE);
+  } else if(lastPointerY > window.innerHeight - AUTOSCROLL_EDGE){
+    speed = AUTOSCROLL_MAX_SPEED * (1 - (window.innerHeight - lastPointerY) / AUTOSCROLL_EDGE);
+  }
+  if(speed !== 0) window.scrollBy(0, speed);
+  requestAnimationFrame(autoScrollLoop);
+}
+
+function attachDrag(chip){
+  chip.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    dragChipData = {text: chip.dataset.text, nodeId: chip.dataset.nodeId};
+    const rect = chip.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    dragEl = chip.cloneNode(true);
+    dragEl.classList.add('dragging');
+    dragEl.style.width = rect.width+'px';
+    dragEl.style.left = rect.left+'px';
+    dragEl.style.top = rect.top+'px';
+    document.body.appendChild(dragEl);
+    chip.style.visibility = 'hidden';
+
+    chip.setPointerCapture && chip.setPointerCapture(e.pointerId);
+
+    isDraggingChip = true;
+    lastPointerY = e.clientY;
+    requestAnimationFrame(autoScrollLoop);
+
+    function onMove(ev){
+      if(!dragEl) return;
+      lastPointerY = ev.clientY;
+      dragEl.style.left = (ev.clientX - offsetX)+'px';
+      dragEl.style.top = (ev.clientY - offsetY)+'px';
+      document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+      const target = getBlankUnder(ev.clientX, ev.clientY);
+      if(target) target.classList.add('dragover');
+    }
+    function onUp(ev){
+      isDraggingChip = false;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      handleDrop(ev.clientX, ev.clientY, chip);
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+function getBlankUnder(x,y){
+  if(dragEl) dragEl.style.display='none';
+  const el = document.elementFromPoint(x,y);
+  if(dragEl) dragEl.style.display='';
+  if(!el) return null;
+  return el.closest('.blank');
+}
+
+function handleDrop(x,y, chip){
+  const blank = getBlankUnder(x,y);
+  document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+
+  if(blank && blank.dataset.filled === 'false'){
+    const expected = blank.dataset.answer;
+    if(dragChipData.text === expected){
+      blank.dataset.filled = 'true';
+      blank.classList.add('filled');
+      blank.innerHTML = expected;
+      usedCount++;
+      chip.remove();
+      updateProgress();
+    } else {
+      blank.classList.add('wrong-flash');
+      setTimeout(()=>blank.classList.remove('wrong-flash'), 400);
+      chip.style.visibility = 'visible';
+    }
+  } else {
+    chip.style.visibility = 'visible';
+  }
+
+  if(dragEl){ dragEl.remove(); dragEl = null; }
+  dragChipData = null;
+}
+
+document.getElementById('reset-btn').addEventListener('click', resetPuzzle);
+
+resetPuzzle();
+</script>
+
+</body>
+</html>

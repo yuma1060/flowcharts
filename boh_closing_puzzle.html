@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOH Closing Flow Chart — Puzzle</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --paper:#faf8f4;
+    --panel:#111111;
+    --blue:#1f3a5f;
+    --green:#3e6b23;
+    --orange:#d9711f;
+    --orange-dark:#b8590f;
+    --gray-diamond:#9a9a9a;
+    --good:#2f8f4e;
+    --bad:#c0392b;
+    --blank-border:#c9c2b4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Helvetica, Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding-bottom:60px;
+  }
+  header{
+    padding:22px 20px 16px;
+    text-align:center;
+    border-bottom:3px solid var(--ink);
+    background:var(--paper);
+  }
+  header h1{margin:0 0 6px; font-size:1.5rem; letter-spacing:0.3px;}
+  header p{margin:0 auto; color:#555; font-size:0.92rem; max-width:640px;}
+
+  .legend{display:flex; justify-content:center; gap:18px; padding:10px 16px 0; flex-wrap:wrap;}
+  .legend-item{display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:600;}
+  .swatch{width:18px; height:18px; border-radius:5px;}
+  .swatch.p1{background:var(--panel);}
+  .swatch.p2{background:var(--blue);}
+  .swatch.p3{background:var(--green);}
+
+  .status-bar{
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    padding:12px 16px; flex-wrap:wrap;
+  }
+  .progress-pill{
+    background:var(--ink); color:#fff; padding:6px 16px; border-radius:999px;
+    font-weight:600; font-size:0.9rem;
+  }
+  button.action-btn{
+    background:var(--orange); color:#fff; border:none; padding:8px 18px;
+    border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  button.action-btn:hover{background:var(--orange-dark);}
+  button.action-btn.secondary{background:transparent; color:var(--ink); border:2px solid var(--ink);}
+  button.action-btn.secondary:hover{background:var(--ink); color:#fff;}
+
+  #wordbank-label{
+    max-width:1150px; margin:18px auto 6px; padding:0 16px;
+    font-size:0.8rem; font-weight:700; letter-spacing:0.4px; color:#777;
+  }
+  #wordbank{
+    max-width:1150px; margin:0 auto 10px; padding:14px 16px;
+    background:#fff; border:2px dashed var(--blank-border); border-radius:10px;
+    display:flex; flex-wrap:wrap; gap:10px; min-height:64px;
+  }
+  .chip{
+    color:#fff; padding:10px 14px; border-radius:8px; font-size:0.78rem;
+    line-height:1.35; cursor:grab; user-select:none; touch-action:none;
+    box-shadow:0 2px 0 rgba(0,0,0,0.25); max-width:230px; border:1px solid rgba(0,0,0,0.3);
+  }
+  .chip.p1{background:var(--panel);}
+  .chip.p2{background:var(--blue);}
+  .chip.p3{background:var(--green);}
+  .chip:active{cursor:grabbing;}
+  .chip.dragging{
+    position:fixed; z-index:999; pointer-events:none; opacity:0.95;
+    transform:scale(1.03); box-shadow:0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  #canvas-wrap{
+    max-width:1150px; margin:8px auto 0; position:relative; width:100%;
+    aspect-ratio:1200/2100;
+  }
+  svg.connectors{position:absolute; inset:0; width:100%; height:100%;}
+  .node{
+    position:absolute; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:6px; font-size:0.66rem; line-height:1.22;
+  }
+  .node.fixed-rect{background:var(--panel); color:#fff; border-radius:10px; font-weight:600;}
+  .node.diamond .diamond-bg{
+    position:absolute; inset:0; background:var(--gray-diamond);
+    clip-path:polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%); border-radius:6px;
+  }
+  .node.diamond .diamond-text{position:relative; z-index:2; color:#fff; font-weight:700; padding:0 16%;}
+  .node.circle{
+    border-radius:50%; background:#fff; border:6px solid var(--orange);
+    color:var(--orange); font-weight:800; font-size:0.8rem;
+  }
+  .blank{
+    position:absolute; background:#fff; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:6px; font-size:0.66rem; line-height:1.25; color:#9a9a9a; font-weight:600;
+    transition:background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .blank.p1{border:2.5px dashed #555;}
+  .blank.p2{border:2.5px dashed var(--blue);}
+  .blank.p3{border:2.5px dashed var(--green);}
+  .blank .hint-mark{font-size:1.2rem; color:#c9c2b4;}
+  .blank.filled{border-style:solid; color:#fff; font-weight:600;}
+  .blank.filled.p1{background:var(--panel); border-color:var(--good);}
+  .blank.filled.p2{background:var(--blue); border-color:var(--good);}
+  .blank.filled.p3{background:var(--green); border-color:var(--good);}
+  .blank.dragover{background:#fff6ec; border-color:var(--orange) !important;}
+  .blank.wrong-flash{animation:shakeRed 0.4s ease; border-color:var(--bad) !important; background:#fdeceb;}
+  @keyframes shakeRed{
+    0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);}
+  }
+  .arrow-label{
+    position:absolute; background:var(--paper); padding:1px 5px;
+    font-size:0.62rem; font-weight:700; font-style:italic; color:#444;
+  }
+  #win-banner{
+    display:none; max-width:1150px; margin:16px auto; padding:16px 20px;
+    background:var(--good); color:#fff; border-radius:10px; text-align:center;
+    font-weight:700; font-size:1rem;
+  }
+  @media (prefers-reduced-motion: reduce){ .blank.wrong-flash{animation:none;} }
+  @media (max-width:640px){
+    header h1{font-size:1.2rem;}
+    .chip{font-size:0.68rem; max-width:170px; padding:8px 10px;}
+    .node, .blank{font-size:0.54rem;}
+    .node.circle{font-size:0.6rem;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Back of House Closing — Flow Chart Puzzle</h1>
+  <p>Drag each step into its matching blank. Colors show who does each task. Decision points, PRE-CLOSE, CLOSE, FLOORS, and FINISH are already filled in.</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><span class="swatch p1"></span>Person 1</div>
+  <div class="legend-item"><span class="swatch p2"></span>Person 2</div>
+  <div class="legend-item"><span class="swatch p3"></span>Person 1 or 2</div>
+</div>
+
+<div class="status-bar">
+  <div class="progress-pill" id="progress-pill">0 / 30 placed</div>
+  <button class="action-btn secondary" id="reset-btn">Reset</button>
+</div>
+
+<div id="wordbank-label">DRAG FROM HERE</div>
+<div id="wordbank"></div>
+
+<div id="win-banner">🎉 Nice work — the full BOH closing flow is correctly rebuilt!</div>
+
+<div id="canvas-wrap">
+  <svg class="connectors" viewBox="0 0 1200 2100" preserveAspectRatio="none"></svg>
+  <div id="nodes-layer"></div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const W = 1200, H = 2100;
+
+const nodes = [
+  // fixed anchors
+  {id:'pre_close', x:20, y:90, w:160, h:150, shape:'circle', fixed:true, text:'PRE-<br>CLOSE'},
+  {id:'close_node', x:730, y:470, w:150, h:150, shape:'circle', fixed:true, text:'CLOSE'},
+  {id:'which_station', x:680, y:820, w:250, h:220, shape:'diamond', fixed:true, text:'Which Station?'},
+  {id:'floors_node', x:730, y:1080, w:150, h:150, shape:'circle', fixed:true, text:'FLOORS'},
+  {id:'finish_node', x:970, y:1870, w:150, h:150, shape:'circle', fixed:true, text:'FINISH'},
+
+  // Person 1 (black) chain
+  {id:'n1', x:220, y:110, w:200, h:120, person:1, text:'Cook reduced batch sizes 30 mins before dinner rush end'},
+  {id:'n2', x:460, y:100, w:210, h:140, person:1, text:'Check prep level in walk-in cooler and inventory level for next day'},
+  {id:'n3', x:710, y:120, w:190, h:110, person:1, text:'Wash and refill sauce cart'},
+  {id:'n4', x:710, y:270, w:190, h:160, person:1, text:'Clean and Restock:<br>&bull; Prep table<br>&bull; Reach-in freezer<br>&bull; Reach-in cooler'},
+  {id:'n5', x:460, y:290, w:210, h:140, person:1, text:'Turn one of the Fryer to "Pilot" position (Based on business needs)'},
+  {id:'n6', x:220, y:270, w:200, h:160, person:1, text:'Clean and filter the Fryer then turn Fryer back on'},
+  {id:'n7', x:220, y:470, w:210, h:170, person:1, text:'&bull; Turn off the other fryer to "Pilot" position<br>&bull; Clean and filter the fryer then turn it on'},
+  {id:'n8', x:470, y:490, w:200, h:130, person:1, text:'Utilize buddy system to take out trash'},
+  {id:'n9', x:220, y:680, w:210, h:280, person:1, text:'Clean :<br>&bull; Burner Tips<br>&bull; Wok rings<br>&bull; Range walls<br>&bull; Hoods<br>&bull; Food catch pans<br>&bull; Blancher<br>&bull; Teriyaki Grill'},
+  {id:'lock_doors', x:730, y:660, w:150, h:120, person:1, text:'Lock all doors'},
+  {id:'n10', x:225, y:1000, w:200, h:130, person:1, text:'Rotate hood filters'},
+  {id:'n11', x:460, y:1000, w:210, h:130, person:1, text:'Degrease and polish all stainless steel'},
+
+  // Person 2 (blue) chain
+  {id:'n13', x:940, y:110, w:200, h:120, person:2, text:'Clean veggie display cooler glass doors'},
+  {id:'n14', x:940, y:270, w:210, h:140, person:2, text:'Clean and restock Fried Rice/Chow Mein prep station'},
+  {id:'n15', x:940, y:450, w:210, h:160, person:2, text:'&bull; Clean Steamed Rice Holding Cabinet<br>&bull; Drain water<br>&bull; Refill with filtered water'},
+  {id:'n16', x:940, y:650, w:210, h:690, person:2, text:'Wash, rinse, sanitize and air-dry<br>&bull; All dishes and pans<br>&bull; Knives<br>&bull; Rice cooker pot and lid, turning fork and rice scoop<br>&bull; Steamed rice holding pot and divider<br>&bull; Serving and cooking utensils<br>&bull; Measurement tools<br>&bull; Fryer baskets and basket holders<br>&bull; Cooking range splash guard<br>&bull; Salad oil drums<br>&bull; Fryer filter machine<br>&bull; Prep sinks<br>&bull; 3 compartment sink'},
+
+  // Person 1 or 2 (green) chain
+  {id:'n17', x:710, y:1270, w:190, h:160, person:3, text:'Sweep floors :<br>&bull; Kitchen area<br>&bull; Walk-in cooler<br>&bull; Walk-in freezer'},
+  {id:'n18', x:460, y:1280, w:210, h:140, person:3, text:'Prepare floor cleaner solution with cold water'},
+  {id:'n19', x:220, y:1270, w:200, h:160, person:3, text:'Wet mop floor with floor cleaner solution and let sit for 10 minutes'},
+  {id:'n20', x:225, y:1470, w:190, h:130, person:3, text:'Scrub floor thoroughly with deck brush'},
+  {id:'n21', x:450, y:1470, w:200, h:130, person:3, text:'Squeegee and dry mop floor with floor cleaner solution'},
+  {id:'n22', x:690, y:1470, w:200, h:130, person:3, text:'Rinse and wring out mop in mop sink'},
+  {id:'n23', x:930, y:1470, w:200, h:130, person:3, text:'Clean mop bucket and mop sink'},
+  {id:'n24', x:930, y:1640, w:200, h:160, person:3, text:'Cover sauce cart with plastic wrap and store in walk-in cooler'},
+  {id:'n25', x:690, y:1650, w:200, h:140, person:3, text:'Store all cleaning tools and chemicals'},
+  {id:'n26', x:450, y:1650, w:200, h:140, person:3, text:'Prepare trash for morning take-out'},
+  {id:'n27', x:220, y:1640, w:190, h:160, person:3, text:'Place all dirty towels in laundry bag'},
+  {id:'n28', x:220, y:1840, w:210, h:190, person:3, text:'Place out:<br>&bull; Fryer equipment<br>&bull; Fresh towels<br>&bull; New scrubbers<br>&bull; Cooking utensils<br>&bull; Measurement tools'},
+  {id:'n29', x:470, y:1860, w:210, h:170, person:3, text:'Turn off :<br>&bull; Cooking range and blancher pilots<br>&bull; Neon signs<br>&bull; Store lights'},
+  {id:'n30', x:720, y:1860, w:210, h:170, person:3, text:'Set alarm and leave store with buddy system'},
+];
+
+const connectors = [
+  {pts:[[180,165],[220,170]]},
+  {pts:[[420,170],[460,170]]},
+  {pts:[[670,170],[710,175]]},
+  {pts:[[805,230],[805,270]]},
+  {pts:[[710,350],[670,360]]},
+  {pts:[[460,360],[420,350]]},
+  {pts:[[320,430],[325,470]]},
+  {pts:[[430,555],[470,555]]},
+  {pts:[[805,620],[805,660]]},
+  {pts:[[805,780],[805,820]]},
+
+  {pts:[[680,930],[430,930]], label:{x:520,y:905,text:'Cooking Range'}},
+  {pts:[[930,930],[940,930]], label:{x:895,y:875,text:'Dish'}},
+
+  {pts:[[325,960],[325,1000]]},
+  {pts:[[425,1065],[460,1065]]},
+  {pts:[[670,1065],[700,1065],[700,1155],[730,1155]]},
+  {pts:[[940,1155],[880,1155]]},
+
+  {pts:[[1040,230],[1045,270]]},
+  {pts:[[1045,410],[1045,450]]},
+
+  {pts:[[805,1230],[805,1270]]},
+  {pts:[[710,1350],[670,1350]]},
+  {pts:[[460,1350],[420,1350]]},
+  {pts:[[320,1430],[320,1470]]},
+  {pts:[[415,1535],[450,1535]]},
+  {pts:[[650,1535],[690,1535]]},
+  {pts:[[890,1535],[930,1535]]},
+  {pts:[[1030,1600],[1030,1640]]},
+  {pts:[[930,1720],[890,1720]]},
+  {pts:[[690,1720],[650,1720]]},
+  {pts:[[450,1720],[410,1720]]},
+  {pts:[[315,1800],[325,1840]]},
+  {pts:[[430,1935],[470,1945]]},
+  {pts:[[680,1945],[720,1945]]},
+  {pts:[[930,1945],[970,1945]]},
+];
+
+const pct = (v, total) => (v/total*100)+'%';
+
+const nodesLayer = document.getElementById('nodes-layer');
+const svg = document.querySelector('svg.connectors');
+const wordbank = document.getElementById('wordbank');
+const progressPill = document.getElementById('progress-pill');
+const winBanner = document.getElementById('win-banner');
+
+const defs = document.createElementNS(NS,'defs');
+defs.innerHTML = `<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+  <path d="M0,0 L8,4 L0,8 Z" fill="#1a1a1a"/>
+</marker>`;
+svg.appendChild(defs);
+
+connectors.forEach(c=>{
+  const pts = c.pts.map(p=>p.join(',')).join(' ');
+  const poly = document.createElementNS(NS,'polyline');
+  poly.setAttribute('points', pts);
+  poly.setAttribute('fill','none');
+  poly.setAttribute('stroke','#1a1a1a');
+  poly.setAttribute('stroke-width','5');
+  poly.setAttribute('marker-end','url(#arrowhead)');
+  svg.appendChild(poly);
+  if(c.label){
+    const lbl = document.createElement('div');
+    lbl.className = 'arrow-label';
+    lbl.style.left = pct(c.label.x, W);
+    lbl.style.top = pct(c.label.y, H);
+    lbl.textContent = c.label.text;
+    document.getElementById('canvas-wrap').appendChild(lbl);
+  }
+});
+
+const draggableNodes = [];
+nodes.forEach(n=>{
+  const el = document.createElement('div');
+  el.style.left = pct(n.x, W);
+  el.style.top = pct(n.y, H);
+  el.style.width = pct(n.w, W);
+  el.style.height = pct(n.h, H);
+
+  if(n.fixed){
+    if(n.shape==='circle'){
+      el.className = 'node circle';
+      el.innerHTML = n.text;
+    } else if(n.shape==='diamond'){
+      el.className = 'node diamond';
+      el.innerHTML = `<div class="diamond-bg"></div><div class="diamond-text">${n.text}</div>`;
+    } else {
+      el.className = 'node fixed-rect';
+      el.innerHTML = n.text;
+    }
+  } else {
+    el.className = 'blank p' + n.person;
+    el.dataset.id = n.id;
+    el.dataset.answer = n.text;
+    el.dataset.filled = 'false';
+    el.innerHTML = '<span class="hint-mark">?</span>';
+    draggableNodes.push(n);
+  }
+  nodesLayer.appendChild(el);
+});
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+let usedCount = 0;
+const totalBlanks = draggableNodes.length;
+
+function buildWordbank(){
+  wordbank.innerHTML = '';
+  const shuffled = shuffle(draggableNodes);
+  shuffled.forEach(n=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip p' + n.person;
+    chip.dataset.text = n.text;
+    chip.dataset.nodeId = n.id;
+    chip.innerHTML = n.text;
+    wordbank.appendChild(chip);
+    attachDrag(chip);
+  });
+}
+
+function updateProgress(){
+  progressPill.textContent = `${usedCount} / ${totalBlanks} placed`;
+  winBanner.style.display = (usedCount === totalBlanks) ? 'block' : 'none';
+}
+
+function resetPuzzle(){
+  usedCount = 0;
+  document.querySelectorAll('.blank').forEach(b=>{
+    b.classList.remove('filled','dragover','wrong-flash');
+    b.dataset.filled = 'false';
+    b.innerHTML = '<span class="hint-mark">?</span>';
+  });
+  buildWordbank();
+  updateProgress();
+}
+
+let dragEl = null;
+let dragChipData = null;
+let offsetX = 0, offsetY = 0;
+let isDraggingChip = false;
+let lastPointerY = 0;
+
+const AUTOSCROLL_EDGE = 110;
+const AUTOSCROLL_MAX_SPEED = 16;
+
+function autoScrollLoop(){
+  if(!isDraggingChip) return;
+  let speed = 0;
+  if(lastPointerY < AUTOSCROLL_EDGE){
+    speed = -AUTOSCROLL_MAX_SPEED * (1 - lastPointerY / AUTOSCROLL_EDGE);
+  } else if(lastPointerY > window.innerHeight - AUTOSCROLL_EDGE){
+    speed = AUTOSCROLL_MAX_SPEED * (1 - (window.innerHeight - lastPointerY) / AUTOSCROLL_EDGE);
+  }
+  if(speed !== 0) window.scrollBy(0, speed);
+  requestAnimationFrame(autoScrollLoop);
+}
+
+function attachDrag(chip){
+  chip.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    dragChipData = {text: chip.dataset.text, nodeId: chip.dataset.nodeId};
+    const rect = chip.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    dragEl = chip.cloneNode(true);
+    dragEl.classList.add('dragging');
+    dragEl.style.width = rect.width+'px';
+    dragEl.style.left = rect.left+'px';
+    dragEl.style.top = rect.top+'px';
+    document.body.appendChild(dragEl);
+    chip.style.visibility = 'hidden';
+
+    chip.setPointerCapture && chip.setPointerCapture(e.pointerId);
+
+    isDraggingChip = true;
+    lastPointerY = e.clientY;
+    requestAnimationFrame(autoScrollLoop);
+
+    function onMove(ev){
+      if(!dragEl) return;
+      lastPointerY = ev.clientY;
+      dragEl.style.left = (ev.clientX - offsetX)+'px';
+      dragEl.style.top = (ev.clientY - offsetY)+'px';
+      document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+      const target = getBlankUnder(ev.clientX, ev.clientY);
+      if(target) target.classList.add('dragover');
+    }
+    function onUp(ev){
+      isDraggingChip = false;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      handleDrop(ev.clientX, ev.clientY, chip);
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+function getBlankUnder(x,y){
+  if(dragEl) dragEl.style.display='none';
+  const el = document.elementFromPoint(x,y);
+  if(dragEl) dragEl.style.display='';
+  if(!el) return null;
+  return el.closest('.blank');
+}
+
+function handleDrop(x,y, chip){
+  const blank = getBlankUnder(x,y);
+  document.querySelectorAll('.blank').forEach(b=>b.classList.remove('dragover'));
+
+  if(blank && blank.dataset.filled === 'false'){
+    const expected = blank.dataset.answer;
+    if(dragChipData.text === expected){
+      blank.dataset.filled = 'true';
+      blank.classList.add('filled');
+      blank.innerHTML = expected;
+      usedCount++;
+      chip.remove();
+      updateProgress();
+    } else {
+      blank.classList.add('wrong-flash');
+      setTimeout(()=>blank.classList.remove('wrong-flash'), 400);
+      chip.style.visibility = 'visible';
+    }
+  } else {
+    chip.style.visibility = 'visible';
+  }
+
+  if(dragEl){ dragEl.remove(); dragEl = null; }
+  dragChipData = null;
+}
+
+document.getElementById('reset-btn').addEventListener('click', resetPuzzle);
+
+resetPuzzle();
+</script>
+
+</body>
+</html>
