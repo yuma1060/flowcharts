@@ -296,8 +296,8 @@ const NS = "http://www.w3.org/2000/svg";
 const nodes = [
   {id:'start_here', x:20, y:145, w:150, h:150, shape:'circle', fixed:true, text:'START<br>HERE'},
   {id:'decision_boh', x:195, y:130, w:180, h:180, shape:'diamond', fixed:true, text:'Has BOH already started opening?'},
-  {id:'wash_no', x:430, y:185, w:120, h:70, shape:'rect', fixed:false, text:'Wash hands'},
-  {id:'prelim', x:590, y:140, w:210, h:160, shape:'rect', fixed:false, text:'&bull; Disable alarm<br>&bull; Turn on music<br>&bull; Turn on store lights<br>&bull; Set time delay for safe'},
+  {id:'prelim', x:430, y:140, w:210, h:160, shape:'rect', fixed:false, text:'&bull; Disable alarm<br>&bull; Turn on music<br>&bull; Turn on store lights<br>&bull; Set time delay for safe'},
+  {id:'wash_no', x:680, y:185, w:120, h:70, shape:'rect', fixed:false, text:'Wash hands'},
   {id:'decision_service', x:840, y:130, w:170, h:180, shape:'diamond', fixed:true, text:'Type of Service Table?'},
   {id:'steam_fill', x:1010, y:150, w:140, h:140, shape:'rect', fixed:false, text:'Fill steam table with water to appropriate level'},
 
@@ -323,7 +323,7 @@ const connectors = [
   {pts:[[170,220],[195,220]]},
   {pts:[[375,220],[430,220]], label:{x:395,y:200,text:'No'}},
   {pts:[[285,310],[285,650]], label:{x:250,y:480,text:'Yes'}},
-  {pts:[[550,220],[590,220]]},
+  {pts:[[640,220],[680,220]]},
   {pts:[[800,220],[840,220]]},
   {pts:[[1010,220],[1010,220]], skip:true},
   {pts:[[1005,190],[1010,190]], label:{x:940,y:145,text:'Water/Steam'}},

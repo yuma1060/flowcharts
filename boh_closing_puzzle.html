@@ -152,7 +152,7 @@
 </div>
 
 <div class="status-bar">
-  <div class="progress-pill" id="progress-pill">0 / 30 placed</div>
+  <div class="progress-pill" id="progress-pill">0 / 28 placed</div>
   <button class="action-btn secondary" id="reset-btn">Reset</button>
 </div>
 
@@ -176,43 +176,41 @@ const nodes = [
   {id:'close_node', x:730, y:470, w:150, h:150, shape:'circle', fixed:true, text:'CLOSE'},
   {id:'which_station', x:680, y:820, w:250, h:220, shape:'diamond', fixed:true, text:'Which Station?'},
   {id:'floors_node', x:730, y:1080, w:150, h:150, shape:'circle', fixed:true, text:'FLOORS'},
-  {id:'finish_node', x:970, y:1870, w:150, h:150, shape:'circle', fixed:true, text:'FINISH'},
+  {id:'finish_node', x:940, y:1900, w:150, h:150, shape:'circle', fixed:true, text:'FINISH'},
 
   // Person 1 (black) chain
   {id:'n1', x:220, y:110, w:200, h:120, person:1, text:'Cook reduced batch sizes 30 mins before dinner rush end'},
   {id:'n2', x:460, y:100, w:210, h:140, person:1, text:'Check prep level in walk-in cooler and inventory level for next day'},
-  {id:'n3', x:710, y:120, w:190, h:110, person:1, text:'Wash and refill sauce cart'},
-  {id:'n4', x:710, y:270, w:190, h:160, person:1, text:'Clean and Restock:<br>&bull; Prep table<br>&bull; Reach-in freezer<br>&bull; Reach-in cooler'},
-  {id:'n5', x:460, y:290, w:210, h:140, person:1, text:'Turn one of the Fryer to "Pilot" position (Based on business needs)'},
-  {id:'n6', x:220, y:270, w:200, h:160, person:1, text:'Clean and filter the Fryer then turn Fryer back on'},
-  {id:'n7', x:220, y:470, w:210, h:170, person:1, text:'&bull; Turn off the other fryer to "Pilot" position<br>&bull; Clean and filter the fryer then turn it on'},
+  {id:'n3', x:710, y:120, w:190, h:110, person:1, text:'Refil sauce cart'},
+  {id:'n4', x:710, y:270, w:190, h:160, person:1, text:'Restock:<br>&bull; Prep table<br>&bull; Reach-in freezer<br>&bull; Reach-in cooler'},
+  {id:'n5', x:460, y:280, w:210, h:160, person:1, text:'Sweep floors :<br>&bull; Kitchen area<br>&bull; Walk-in cooler<br>&bull; Walk-in freezer'},
+  {id:'n6', x:220, y:270, w:200, h:160, person:1, text:'&bull; Turn off the other fryer to "Pilot" position<br>&bull; Filter the fryer then turn fryer back on'},
+  {id:'n7', x:220, y:470, w:210, h:170, person:1, text:'&bull; Turn off the other fryer to "Pilot" position<br>&bull; Filter the fryer'},
   {id:'n8', x:470, y:490, w:200, h:130, person:1, text:'Utilize buddy system to take out trash'},
-  {id:'n9', x:220, y:680, w:210, h:280, person:1, text:'Clean :<br>&bull; Burner Tips<br>&bull; Wok rings<br>&bull; Range walls<br>&bull; Hoods<br>&bull; Food catch pans<br>&bull; Blancher<br>&bull; Teriyaki Grill'},
+  {id:'n9', x:220, y:680, w:210, h:340, person:1, text:'Clean :<br>&bull; Sauce Cart<br>&bull; Burner Tips<br>&bull; Wok rings<br>&bull; Range walls<br>&bull; Hoods<br>&bull; Food catch pans<br>&bull; Blancher<br>&bull; Teriyaki Grill<br>&bull; Fryers (As needed)'},
   {id:'lock_doors', x:730, y:660, w:150, h:120, person:1, text:'Lock all doors'},
-  {id:'n10', x:225, y:1000, w:200, h:130, person:1, text:'Rotate hood filters'},
-  {id:'n11', x:460, y:1000, w:210, h:130, person:1, text:'Degrease and polish all stainless steel'},
+  {id:'n10', x:225, y:1060, w:200, h:130, person:1, text:'Rotate hood filters'},
+  {id:'n11', x:460, y:1060, w:210, h:130, person:1, text:'Degrease and polish all stainless steel'},
 
   // Person 2 (blue) chain
-  {id:'n13', x:940, y:110, w:200, h:120, person:2, text:'Clean veggie display cooler glass doors'},
-  {id:'n14', x:940, y:270, w:210, h:140, person:2, text:'Clean and restock Fried Rice/Chow Mein prep station'},
-  {id:'n15', x:940, y:450, w:210, h:160, person:2, text:'&bull; Clean Steamed Rice Holding Cabinet<br>&bull; Drain water<br>&bull; Refill with filtered water'},
-  {id:'n16', x:940, y:650, w:210, h:690, person:2, text:'Wash, rinse, sanitize and air-dry<br>&bull; All dishes and pans<br>&bull; Knives<br>&bull; Rice cooker pot and lid, turning fork and rice scoop<br>&bull; Steamed rice holding pot and divider<br>&bull; Serving and cooking utensils<br>&bull; Measurement tools<br>&bull; Fryer baskets and basket holders<br>&bull; Cooking range splash guard<br>&bull; Salad oil drums<br>&bull; Fryer filter machine<br>&bull; Prep sinks<br>&bull; 3 compartment sink'},
+  {id:'n13', x:940, y:110, w:200, h:120, person:2, text:'Maintain veggie display cooler glass doors'},
+  {id:'n14', x:940, y:270, w:210, h:140, person:2, text:'Restock Fried Rice/Chow Mein prep station'},
+  {id:'n16', x:940, y:450, w:210, h:850, person:2, text:'Maintain Steamed Rice Holding Cabinet<br>&bull; Drain water<br>&bull; Refill with filtered water<br><br>Wash, rinse, sanitize and air-dry<br>&bull; All dishes and pans<br>&bull; Knives<br>&bull; Rice cooker pot and lid, turning fork and rice scoop<br>&bull; Steamed rice holding pot and divider<br>&bull; Serving and cooking utensils<br>&bull; Measurement tools<br>&bull; Fryer baskets and basket holders<br>&bull; Cooking range splash guard<br>&bull; Salad oil drums<br>&bull; Fryer filter machine<br>&bull; Prep sinks<br>&bull; 3 compartment sink'},
 
   // Person 1 or 2 (green) chain
-  {id:'n17', x:710, y:1270, w:190, h:160, person:3, text:'Sweep floors :<br>&bull; Kitchen area<br>&bull; Walk-in cooler<br>&bull; Walk-in freezer'},
-  {id:'n18', x:460, y:1280, w:210, h:140, person:3, text:'Prepare floor cleaner solution with cold water'},
-  {id:'n19', x:220, y:1270, w:200, h:160, person:3, text:'Wet mop floor with floor cleaner solution and let sit for 10 minutes'},
-  {id:'n20', x:225, y:1470, w:190, h:130, person:3, text:'Scrub floor thoroughly with deck brush'},
-  {id:'n21', x:450, y:1470, w:200, h:130, person:3, text:'Squeegee and dry mop floor with floor cleaner solution'},
-  {id:'n22', x:690, y:1470, w:200, h:130, person:3, text:'Rinse and wring out mop in mop sink'},
-  {id:'n23', x:930, y:1470, w:200, h:130, person:3, text:'Clean mop bucket and mop sink'},
-  {id:'n24', x:930, y:1640, w:200, h:160, person:3, text:'Cover sauce cart with plastic wrap and store in walk-in cooler'},
-  {id:'n25', x:690, y:1650, w:200, h:140, person:3, text:'Store all cleaning tools and chemicals'},
-  {id:'n26', x:450, y:1650, w:200, h:140, person:3, text:'Prepare trash for morning take-out'},
-  {id:'n27', x:220, y:1640, w:190, h:160, person:3, text:'Place all dirty towels in laundry bag'},
-  {id:'n28', x:220, y:1840, w:210, h:190, person:3, text:'Place out:<br>&bull; Fryer equipment<br>&bull; Fresh towels<br>&bull; New scrubbers<br>&bull; Cooking utensils<br>&bull; Measurement tools'},
-  {id:'n29', x:470, y:1860, w:210, h:170, person:3, text:'Turn off :<br>&bull; Cooking range and blancher pilots<br>&bull; Neon signs<br>&bull; Store lights'},
-  {id:'n30', x:720, y:1860, w:210, h:170, person:3, text:'Set alarm and leave store with buddy system'},
+  {id:'n18', x:700, y:1270, w:200, h:140, person:3, text:'Prepare floor cleaner solution with cold water into mop bucket'},
+  {id:'n19', x:460, y:1270, w:200, h:160, person:3, text:'Use mop to spread the floor cleaner solution and let sit for 10 minutes'},
+  {id:'n20', x:220, y:1270, w:200, h:130, person:3, text:'Scrub floor thoroughly with deck brush'},
+  {id:'n21', x:220, y:1470, w:200, h:130, person:3, text:'Squeegee and dry mop floor with floor cleaner solution'},
+  {id:'n22', x:460, y:1470, w:200, h:130, person:3, text:'Rinse and wring out mop in mop sink'},
+  {id:'n23', x:700, y:1470, w:200, h:130, person:3, text:'Clean mop bucket and mop sink'},
+  {id:'n24', x:940, y:1470, w:200, h:160, person:3, text:'Cover sauce cart with plastic wrap and store in walk-in cooler'},
+  {id:'n25', x:700, y:1670, w:200, h:140, person:3, text:'Store all cleaning tools and chemicals'},
+  {id:'n26', x:460, y:1670, w:200, h:140, person:3, text:'Prepare trash for morning take-out'},
+  {id:'n27', x:220, y:1670, w:200, h:160, person:3, text:'Place all dirty towels in laundry bag'},
+  {id:'n28', x:220, y:1870, w:200, h:190, person:3, text:'Place out:<br>&bull; Fryer equipment<br>&bull; Fresh towels<br>&bull; New scrubbers<br>&bull; Cooking utensils<br>&bull; Measurement tools'},
+  {id:'n29', x:460, y:1890, w:200, h:170, person:3, text:'Turn off :<br>&bull; Cooking range and blancher pilots<br>&bull; Neon signs<br>&bull; Store lights'},
+  {id:'n30', x:700, y:1890, w:200, h:170, person:3, text:'Set alarm and leave store with buddy system'},
 ];
 
 const connectors = [
@@ -230,29 +228,28 @@ const connectors = [
   {pts:[[680,930],[430,930]], label:{x:520,y:905,text:'Cooking Range'}},
   {pts:[[930,930],[940,930]], label:{x:895,y:875,text:'Dish'}},
 
-  {pts:[[325,960],[325,1000]]},
-  {pts:[[425,1065],[460,1065]]},
-  {pts:[[670,1065],[700,1065],[700,1155],[730,1155]]},
+  {pts:[[325,1020],[325,1060]]},
+  {pts:[[425,1125],[460,1125]]},
+  {pts:[[670,1125],[700,1125],[700,1155],[730,1155]]},
   {pts:[[940,1155],[880,1155]]},
 
   {pts:[[1040,230],[1045,270]]},
   {pts:[[1045,410],[1045,450]]},
 
   {pts:[[805,1230],[805,1270]]},
-  {pts:[[710,1350],[670,1350]]},
-  {pts:[[460,1350],[420,1350]]},
-  {pts:[[320,1430],[320,1470]]},
-  {pts:[[415,1535],[450,1535]]},
-  {pts:[[650,1535],[690,1535]]},
-  {pts:[[890,1535],[930,1535]]},
-  {pts:[[1030,1600],[1030,1640]]},
-  {pts:[[930,1720],[890,1720]]},
-  {pts:[[690,1720],[650,1720]]},
-  {pts:[[450,1720],[410,1720]]},
-  {pts:[[315,1800],[325,1840]]},
-  {pts:[[430,1935],[470,1945]]},
-  {pts:[[680,1945],[720,1945]]},
-  {pts:[[930,1945],[970,1945]]},
+  {pts:[[700,1345],[660,1345]]},
+  {pts:[[460,1342],[420,1342]]},
+  {pts:[[320,1400],[320,1470]]},
+  {pts:[[420,1535],[460,1535]]},
+  {pts:[[660,1535],[700,1535]]},
+  {pts:[[900,1540],[940,1540]]},
+  {pts:[[1040,1630],[1040,1660],[800,1660],[800,1670]]},
+  {pts:[[700,1740],[660,1740]]},
+  {pts:[[460,1740],[420,1740]]},
+  {pts:[[320,1830],[320,1870]]},
+  {pts:[[420,1965],[460,1970]]},
+  {pts:[[660,1975],[700,1975]]},
+  {pts:[[900,1975],[940,1975]]},
 ];
 
 const pct = (v, total) => (v/total*100)+'%';
